@@ -10,11 +10,13 @@ import pygame, random, sys
 # Look for a zero, and set it to a value that is is touching (not 0 though)
 # Or search for zeros and start new paths?
 
+# I think I fixed the zeros, it will restart until there were no Zeros.
+
 #Initialize all imported pygame modules.
 pygame.init()
 
 #Define game variables.
-SIZE = 13
+SIZE = 20
 WIN_WIDTH = (SIZE*30)+30
 WIN_HEIGHT = (SIZE*30)+30
 ROWS = SIZE
@@ -186,7 +188,7 @@ def displayStuff():
 			pygame.draw.rect(screen, (255, 255, 255), (col*30 + 30 - lineMarg, row*30 + 30 - lineMarg, lineSize-1, lineSize-1)) #, lineSize*2
 
 			pygame.draw.rect(screen, (255, 255, 255), (15, 15, WIN_WIDTH-30 , WIN_HEIGHT-30), lineSize)
-			#drawText(str(mazeArray[row][col]), col*30 + 30, row*30 + 30)
+			drawText(str(mazeArray[row][col]), col*30 + 30, row*30 + 30)
 
 
 def newBranch(coordinates, direction, number):
@@ -229,9 +231,21 @@ def newBranch(coordinates, direction, number):
 		return True
 
 
-newBranch([3,3], [0,1], 1)
+# newBranch([3,3], [0,1], 1)
+# seachForZeros()
 
-seachForZeros()
+while any(0 in sublist for sublist in mazeArray):
+	mazeArray = []
+	for rows in range(ROWS):
+		thisRow = []
+
+		for cols in range(COLS):
+			thisRow.append(0)
+
+		mazeArray.append(thisRow)
+	
+	newBranch([3,3], [0,1], 1)
+	#seachForZeros()
 
 # Main loop to update and draw the game in screen.
 def gameLoop():
