@@ -18,16 +18,11 @@ import pygame, random
 pygame.init()
 
 #Define game variables.
-SIZE = 4 # >3
-WIN_WIDTH = (SIZE*30)+30
-WIN_HEIGHT = (SIZE*30)+30
-ROWS = SIZE
-COLS = SIZE
 backgroudColour = (0,0,0)
 
 
 mazeArray = []
-
+COLS, ROWS = 0, 0
 
 def positionInArray(coordinates): # [c, r]
 	colPos = coordinates[0]
@@ -158,6 +153,8 @@ def newBranch(coordinates, direction, number):
 
 def generateMaze(size):
 	global mazeArray
+	global ROWS
+	global COLS
 	ROWS = size
 	COLS = size
 	mazeArray = []

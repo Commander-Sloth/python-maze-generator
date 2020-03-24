@@ -5,14 +5,31 @@ from mazeGenerator import generateMaze
 pygame.init()
 
 #Define game variables.
-SIZE = 4 # >3
+SIZE = 10 # >3
 WIN_WIDTH = (SIZE*30)+30
 WIN_HEIGHT = (SIZE*30)+30
 ROWS = SIZE
 COLS = SIZE
 backgroudColour = (0,0,0)
 
-mazeArray = generateMaze(4)
+playerArray = []
+for rows in range(ROWS):
+	thisRow = []
+
+	for cols in range(COLS):
+		thisRow.append(0)
+
+	playerArray.append(thisRow)
+
+mazeArray = generateMaze(SIZE)
+# mazeArray = []
+# for rows in range(ROWS):
+# 	thisRow = []
+
+# 	for cols in range(COLS):
+# 		thisRow.append(0)
+
+# 	mazeArray.append(thisRow)
 
 cursorEvent = pygame.event.poll()
 
@@ -51,6 +68,65 @@ def positionInArray(coordinates): # [c, r]
 	else: return False
 
 
+def getNewCoords(coordinates, direction):
+	newC = coordinates[0] + direction[0]
+	newR = coordinates[1] + direction[1]
+	newCoords = [newC, newR]
+
+	return newCoords
+
+
+def testForEdge(coordinates): # [c, r]
+	global mazeArray
+	colPos = coordinates[0]
+	rowPos = coordinates[1]
+
+	if colPos < 0 or colPos > COLS-1 or rowPos < 0 or rowPos > ROWS-1:
+		return False
+	else:
+		return True
+
+
+class player:
+	def __init__(self):
+		# These should be random
+		self.x = random.randint(0,COLS-1)
+		self.y = random.randint(0,ROWS-1)
+
+	def updatePosition(self, direction):
+		global playerArray, mazeArray
+		
+
+		playerArray[self.y][self.x] = 0
+		newC = getNewCoords([self.x, self.y], direction)
+
+		if testForEdge(newC): #positionInArray(getNewCoords(newC, direction)):
+			if mazeArray[newC[1]][newC[0]] == int(mazeArray[self.y][self.x] + 1) or mazeArray[newC[1]][newC[0]] == int(mazeArray[self.y][self.x] - 1):
+				if direction == [0,1]:
+					self.y = self.y + 1
+				elif direction == [0,-1]:
+					self.y = self.y - 1
+				elif direction == [1,0]:
+					self.x = self.x + 1
+				elif direction == [-1,0]:
+					self.x = self.x - 1
+
+				print("Updating position")
+			else:
+				print(str(mazeArray[newC[1]][newC[0]]) + " was not ~" + str(mazeArray[self.y][self.x]))
+
+		playerArray[self.y][self.x] = 1#self.process() # or playerArray[self.y][self.x] = 1
+
+
+
+
+	def process(self):
+		global playerArray, mazeArray
+			
+		playerArray[self.y][self.x] = 1
+
+Player = player()
+
 def drawFixers():
 	lineSize = 3
 
@@ -75,17 +151,10 @@ def drawFixers():
 					# OR RIGHT
 
 
-def getNewCoords(coordinates, direction):
-	newC = coordinates[0] + direction[0]
-	newR = coordinates[1] + direction[1]
-	newCoords = [newC, newR]
-
-	return newCoords
-
-
 def displayStuff():
 	lineSize = 3
 	lineMarg = 15
+
 	for row in range(ROWS):
 		for col in range(COLS):
 			UP = getNewCoords([col, row], [0, -1])
@@ -114,6 +183,12 @@ def displayStuff():
 			pygame.draw.rect(screen, (255, 255, 255), (15, 15, WIN_WIDTH-30 , WIN_HEIGHT-30), lineSize)
 			#drawText(str(mazeArray[row][col]), col*30 + 30, row*30 + 30)
 
+			if playerArray[row][col] > 0:
+				pygame.draw.rect(screen, (230, 230, 230), (col*30 + 30 - lineMarg, row*30 + 30 - lineMarg, 30, 30))
+				#drawText(str(mazeArray[row][col]), col*30 + 30, row*30 + 30)
+
+	Player.process()
+
 
 # Main loop to update and draw the game in screen.
 def displayLoop():
@@ -127,9 +202,19 @@ def displayLoop():
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				sys.exit()
-			elif event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_q:
+			elif event.type == pygame.KEYUP:
+				if event.key == pygame.K_SPACE:
+					startGame()
+				elif  event.key == pygame.K_q:
 					pygame.quit()
+				elif event.key == pygame.K_UP:
+					Player.updatePosition([0,-1])
+				elif event.key == pygame.K_DOWN:
+					Player.updatePosition([0,1])
+				elif event.key == pygame.K_RIGHT:
+					Player.updatePosition([1,0])
+				elif event.key == pygame.K_LEFT:
+					Player.updatePosition([-1,0])
 
 		# Do not update the images every single frame, however, key events are detected every frame.
 		if timeTracker % 10 == 0:
@@ -146,9 +231,9 @@ def displayLoop():
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				sys.exit()
-			elif event.type == pygame.KEYUP:
-				if event.key == pygame.K_SPACE:
-					startGame()
+			elif event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_q:
+					pygame.quit()
 			
 		screen.fill(backgroudColour)
 
