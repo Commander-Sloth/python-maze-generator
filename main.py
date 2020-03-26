@@ -2,6 +2,10 @@ import pygame
 import time, sys, random
 from mazeGenerator import generateMaze
 
+#FIX SKIPPING THROUGH > Test the diagnonal, and make sure the others are close, if so, don't move. Basically the opposite boolean of the line
+# Test from spot up if direction is up, and test from same spot if it is right.
+# Function to test this?
+
 pygame.init()
 
 #Define game variables.
