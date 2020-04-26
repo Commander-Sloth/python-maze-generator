@@ -1,28 +1,23 @@
 import pygame, random
-# Started on 3/22/2020 7:54 PM and completed on 3/23/2020 at 6:38 PM.
+# Started on 3/22/2020 7:54 PM and completed on 3/23/2020 at 6:38 PM. Revisied on 4/26/2020 at 10:00-12:00 AM.
 
-# THE CODE IS CURRENTLY FUNCTIONAL AND MESSY, NOT OPTIMIZED YET!
-# Next, make initial random path (solution) and then you have to connect it to the rest of the puzzle
-# Maybe sometimes test position + 2 to and connect it?
-# Make the branch stop if the next block is at the edge of the array -> testForEdge
-
-# Draw the path and then just draw walls afters. Add a wall if the value to the left is not thisVal +1 or thisVal -1
-# Look for a zero, and set it to a value that is is touching (not 0 though)
-# Or search for zeros and start new paths?
-
-# I think I fixed the zeros, it will restart until there were no Zeros.
-
-#TODO- Fix Loops things that wouldn't make a game playable?
-#  - Change #screen shot
-#Initialize all imported pygame modules.
 pygame.init()
 
 #Define game variables.
 backgroudColour = (0,0,0)
 
-
 mazeArray = []
-COLS, ROWS = 0, 0
+wallArray = []
+
+class pathStep():
+	def __init__(self, col, row):
+		self.col = col
+		self.row = row
+		self.topWall = True
+		self.botWall = True
+		self.lefWall = True
+		self.rigWall = True
+
 
 def positionInArray(coordinates): # [c, r]
 	colPos = coordinates[0]
@@ -34,7 +29,7 @@ def positionInArray(coordinates): # [c, r]
 
 
 def testForVal(coordinates): # [c, r]
-	global mazeArray
+	global mazeArray, wallArray
 	colPos = coordinates[0]
 	rowPos = coordinates[1]
 
@@ -47,7 +42,7 @@ def testForVal(coordinates): # [c, r]
 
 
 def testForEdge(coordinates): # [c, r]
-	global mazeArray
+	global mazeArray, wallArray
 	colPos = coordinates[0]
 	rowPos = coordinates[1]
 
@@ -86,7 +81,7 @@ def getDirectsList(coordinates, direction): # [c, r], [-1/1/0, -1/1/0]
 		
 	newList = list(filter(lambda x: (x != 0), possDirList))
 
-	# Should only leave the valid directions
+	# Should only leave the valid directions.
 	return newList
 
 
@@ -96,86 +91,97 @@ def oppositeDirection(direction):
 	
 	return direction
 
+def setWalls(cameFrom, dirGoing, c, r):
+	global wallArray
+	# The new direction will be: possibleDirections[0], the older direction is oppositeDirection(direction).
+	directionGoing = dirGoing
+	cameFromDir = cameFrom
 
-def seachForZeros():
-	global mazeArray
+	if cameFromDir != None:
+		if cameFromDir == [0, -1]: # Up
+			wallArray[r][c].botWall = False
+		elif cameFromDir == [0, 1]: # Down
+			wallArray[r][c].topWall = False
+		elif cameFromDir == [-1, 0]: # Left
+			wallArray[r][c].rigWall = False
+		elif cameFromDir == [1, 0]: # Right
+			wallArray[r][c].lefWall = False
 
-	for r in range(ROWS):
-		for c in range(COLS):
-			if mazeArray[c][r] == 0:
-				possibleDirections = [[0, -1], [0, 1], [-1, 0], [1, 0]]
-				random.shuffle(possibleDirections)
+	if directionGoing != None:
+		if directionGoing == [0, -1]: # Up
+			wallArray[r][c].topWall = False
+		elif directionGoing == [0, 1]: # Down
+			wallArray[r][c].botWall = False
+		elif directionGoing == [-1, 0]: # Left
+			wallArray[r][c].lefWall = False
+		elif directionGoing == [1, 0]: # Right
+			wallArray[r][c].rigWall = False
+	
 
-				for i in range(0, len(possibleDirections)-1):
-					newC = getNewCoords([c, r], possibleDirections[i])
-					if not testForVal(newC) and positionInArray(newC) and positionInArray([c, r]):
-						mazeArray[c][r] = mazeArray[newC[1]][newC[0]]
-						#print('Found a zero')
-						break
-
-
-def newBranch(coordinates, direction, number):
-	global mazeArray, testArray
+def newBranch(coordinates, direction, number, path, resetWalls):
+	global mazeArray, wallArray
+	
 	c, r = coordinates
-
-	if positionInArray(coordinates):
-		mazeArray[r][c] = number
-
+	if resetWalls:
+		wallArray[r][c].topWall = True
+		wallArray[r][c].botWall = True
+		wallArray[r][c].lefWall = True
+		wallArray[r][c].rigWall = True
+	
 	possibleDirections = getDirectsList(coordinates, oppositeDirection(direction)) # Don't want it to go backwards.
-	random.shuffle(possibleDirections)
+	cameFromDir = oppositeDirection(direction)
+	setWalls(cameFromDir, None, c, r)
+	
+	mazeArray[r][c] = number
+	pathList = path
+	pathList.append([c,r])
 
 	if len(possibleDirections) > 0:
-		# Start off by making one more definitive branch
+		random.shuffle(possibleDirections)
 		newC = getNewCoords(coordinates, possibleDirections[0])
-		if testForVal(newC):
-			newBranch(newC, possibleDirections[0], number + 1)
-	
-		if len(possibleDirections) > 1:
-			FiftyFifty = random.randint(0,2)
-			if FiftyFifty == 1:
-				
-				newCo = getNewCoords(coordinates, possibleDirections[1])
-				if testForVal(newCo):
-					newBranch(newCo, possibleDirections[1], number + 1)
 
-			if len(possibleDirections) > 2:
-				FiftyFiftyy = random.randint(0,3)
-				if FiftyFiftyy == 1:
-					newCoo = getNewCoords(coordinates, possibleDirections[1])
-					if testForVal(newCoo):
-						newBranch(newCoo, possibleDirections[1], number + 1)
+		if testForVal(newC): # If this spot is blank
+			directionGoing = possibleDirections[0]
+			
+			setWalls(None, directionGoing, c, r)
+		
+			newBranch(newC, possibleDirections[0], number + 1, pathList, True)
 
+	elif len(possibleDirections) == 0:
+		for i in range(len(pathList), -1, -1):
+			theseCoordinates = pathList[i-1]
+			thisSpotPossibilities = getDirectsList(theseCoordinates, oppositeDirection(direction))
+			if len(thisSpotPossibilities) > 0:
+				newBranch(theseCoordinates, random.choice(thisSpotPossibilities), number + 1, pathList, False)
 
-	else:
-		#print("I cannot go any further!")
-		return True
+		return True # If this is reached, the maze is complete.
 
-
+#pathList = [[0,0]]
 def generateMaze(size):
-	global mazeArray
+	global mazeArray, wallArray
 	global ROWS
 	global COLS
 	ROWS = size
 	COLS = size
-	mazeArray = []
+
 	for rows in range(ROWS):
 		thisRow = []
-
+		thisRowalso = []
 		for cols in range(COLS):
 			thisRow.append(0)
+			thisRowalso.append(pathStep(cols, rows))
 
 		mazeArray.append(thisRow)
+		wallArray.append(thisRowalso)
+	
+	startX, startY = random.randint(0, size-1), random.randint(0, size-1)
+	newBranch([startX,startY], [0,1], 1, [[startX,startY]], True)
 
-	while any(0 in sublist for sublist in mazeArray):
-		mazeArray = []
-		for rows in range(ROWS):
-			thisRow = []
+	# Make sure the border is outlined
+	for s in range(ROWS):
+		wallArray[s][0].lefWall = True
+		wallArray[s][size-1].rigWall = True 
+		wallArray[0][s].topWall = True
+		wallArray[size-1][s].botWall = True 
 
-			for cols in range(COLS):
-				thisRow.append(0)
-
-			mazeArray.append(thisRow)
-		
-		newBranch([3,3], [0,1], 1)
-
-	return mazeArray
+	return mazeArray, wallArray
